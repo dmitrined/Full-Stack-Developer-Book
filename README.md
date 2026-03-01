@@ -263,7 +263,7 @@ public class SecurityConfig {
       │    ├── 📁 migration     (Шаг 2: Flyway)
       │    │    └── V1__init.sql                    # SQL скрипт создания таблиц
       │    └── 📁 changelog     (Шаг 2: Liquibase)
-      │         └── db.changelog-master.yaml        # Индекс миграций
+      │         └── db.changelog-master.xml         # Индекс миграций (XML)
       │
       ├── application.yml       # Базовые настройки
       ├── application-dev.yml   # Профиль для разработки (DB: H2/Localhost)
