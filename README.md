@@ -194,5 +194,37 @@ public class SecurityConfig {
 6.  **Service** управляет бизнес-процессом.
 7.  **Controller** связывает бэкенд с интернетом.
 8.  **Security** проверяет права доступа на входе.
+---
+
+## Типичная структура папок проекта (от А до Я)
+
+В реальном Spring Boot проекте файлы раскладываются по пакетам (папкам) в соответствии с их ролью. Это позволяет любому разработчику мгновенно найти нужный код.
+
+```text
+📂 src/main/java/com/example/project
+ ├── 📁 config             # Шаг 1: Конфигурация (SecurityConfig, MailConfig)
+ ├── 📁 entity             # Шаг 2: Модели БД (User, Order, Product)
+ ├── 📁 repository         # Шаг 3: Репозитории (UserRepository, OrderRepository)
+ ├── 📁 dto                # Шаг 4: Объекты передачи данных
+ │    ├── 📁 request       # Входящие (UserCreateRequest, LoginRequest)
+ │    └── 📁 response      # Исходящие (UserResponse, AuthResponse)
+ ├── 📁 mapper             # Шаг 5: Конвертация (UserMapper, OrderMapper)
+ ├── 📁 service            # Шаг 6: Бизнес-логика (UserService, PaymentService)
+ ├── 📁 controller         # Шаг 7: API Контроллеры (UserController, AdminController)
+ └── 📁 security           # Шаг 8: Механизмы защиты (JwtFilter, UserDetailsServiceImpl)
+```
+
+### Подробный разбор именования файлов:
+
+*   **`config`**: Имя технологии + `Config` (например, `SecurityConfig`, `SwaggerConfig`).
+*   **`entity`**: Существительное в единственном числе (например, `User`, `Order`, `Product`).
+*   **`repository`**: Имя сущности + `Repository` (например, `UserRepository`).
+*   **`dto`**: Имя сущности + `Request` / `Response` (например, `UserCreateRequest`).
+*   **`mapper`**: Имя сущности + `Mapper` (например, `UserMapper`).
+*   **`service`**: Имя сущности + `Service` (например, `UserService`, `PaymentService`).
+*   **`controller`**: Имя сущности + `Controller` (например, `UserController`, `OrderController`).
+*   **`security`**: Технические файлы защиты (например, `JwtProvider`, `JwtFilter`).
+
+---
 
 *Удачи в изучении Spring Boot!* 🚀
