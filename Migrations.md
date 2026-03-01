@@ -87,15 +87,73 @@ ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
 
 ---
 
-### 4. В чем разница между Flyway и Liquibase?
+---
 
-Два почти одинаковых инструмента, но с разным подходом.
+### 5. Практический пример: Liquibase
 
-| | Flyway | Liquibase |
-| :--- | :--- | :--- |
-| **Формат скриптов** | Чистый `SQL` | Описывается через `XML` (чаще всего) или `.yml` (реже) |
-| **Преимущества** | Нативный SQL. Очень легко и быстро писать и читать разработчикам. | Скрипты XML "абстрактны" от БД. Если вы переезжаете с Oracle на MySQL, Liquibase сам переведет XML-структуру в правильный синтаксис нужной БД. |
-| **Откат (Rollback)** | Только в платной (Pro) версии. | Есть в бесплатной. Позволяет писать rollback-скрипты (отменяющие старые). |
-| **Кому подходит** | Небольшим и средним компаниям. Проектам, жестко "прибитым" к одной БД (Postgres). | Огромным Enterprise корпорациям (B2B SaaS), которые продают продукт клиентам с разным "зоопарком" Баз Данных. |
+Liquibase работает иначе: вместо множества SQL-файлов он часто использует один "главный" файл, который подтягивает остальные ("чейнжсеты").
 
-**Итог:** Для 95% проектов (где база Postgres выбрана раз и навсегда) **Flyway** — идеален, потому что писать чистый SQL намного быстрее, чем мучиться с бесконечными XML тегами Liquibase. И это гарантия того, что ваши данные никогда не удалятся непредсказуемой магией Hibernate.
+#### Папки в `src/main/resources`:
+```text
+📂 db/changelog
+ ├── db.changelog-master.yaml  # Главный индекс (точка входа)
+ └── 📁 changes               # Сами миграции
+      ├── 01-create-users.yaml
+      └── 02-add-role-column.yaml
+```
+
+**1. Подключение в `pom.xml`:**
+```xml
+<dependency>
+    <groupId>org.liquibase</groupId>
+    <artifactId>liquibase-core</artifactId>
+</dependency>
+```
+
+**2. Главный файл (db.changelog-master.yaml):**
+```yaml
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/01-create-users.yaml
+  - include:
+      file: db/changelog/changes/02-add-role-column.yaml
+```
+
+**3. Пример миграции (01-create-users.yaml):**
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: ivan
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: username
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+```
+
+**4. Настройка в `application.yml`:**
+```yaml
+spring:
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+```
+
+---
+
+### Итог: Что выбрать?
+
+*   Выбирайте **Flyway**, если ваша команда любит старый добрый **SQL** и вы не планируете менять базу данных.
+*   Выбирайте **Liquibase**, если вам нужна **независимость от типа БД** (один и тот же XML сработает и на Postgres, и на Oracle) или если вам критически важна возможность бесплатного **отката (Rollback)**.
+
+**Помните главное:** Какую бы систему вы ни выбрали, всегда отключайте `ddl-auto=update` для стабильности вашего проекта! 🚀

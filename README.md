@@ -42,7 +42,6 @@
 
 #### 🛠 Шаг 1: `Configuration` (Основание)
 Прежде чем писать бизнес-логику, мы задаем настройки приложения.
-*   **Зачем:** Чтобы внешние параметры (ключи, пути к папкам) не были «зашиты» в коде.
 
 ```java
 @Data // Lombok: создает геттеры, сеттеры, equals, hashCode и toString
@@ -50,109 +49,91 @@
 @ConfigurationProperties(prefix = "app.security") // Привязывает поля к свойствам из application.yml (app.security.*)
 public class SecurityProperties {
     
-    // @Value используется для одиночных значений, если не нужен целый объект настроек
-    @Value("${app.token.expiration:3600}") // Инъекция значения из конфига с дефолтным значением 3600
+    @Value("${app.token.expiration:3600}") // Инъекция одиночного значения
     private long expiration;
 
-    private String jwtSecret; // Будет заполнено из app.security.jwt-secret
+    private String jwtSecret;
 }
 ```
 
 ---
 
-#### 📦 Шаг 2: `Model` (Сущность и Enum)
-Описываем структуру базы данных.
-*   **Зачем:** Это фундамент данных, с которыми работает приложение.
+#### 🐘 Шаг 2: `Migrations` (Схема базы данных)
+Создаем структуру таблиц через Flyway или Liquibase.
+*   **Зачем:** Чтобы структура БД была под контролем Git и не зависела от авто-магии Hibernate.
+
+```sql
+-- Пример V1__create_users_table.sql (Flyway)
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL
+);
+```
+
+---
+
+#### 📦 Шаг 3: `Model` (Сущность и Enum)
+Описываем Java-объекты, которые маппятся на таблицы.
 
 ```java
-@Entity // Указывает, что этот класс является JPA сущностью и привязан к таблице
-@Table(name = "users") // Явное имя таблицы в базе данных
-@Data // Генерирует геттеры, сеттеры и стандартные методы
-@Builder // Позволяет создавать объекты через User.builder().username("...").build()
-@NoArgsConstructor // Нужен Hibernate для создания объекта через рефлексию
-@AllArgsConstructor // Нужен для работы @Builder
+@Entity // Помечает класс как JPA сущность
+@Table(name = "users") // Имя таблицы в БД
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
-    @Id // Помечает поле как первичный ключ (Primary Key)
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Автоинкремент (1, 2, 3...) на стороне БД
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false) // Уникальное поле, не может быть null
+    @Column(unique = true, nullable = false)
     private String username;
 
     private String password;
 
-    @Enumerated(EnumType.STRING) // Сохраняет Enum в базу как строку ("ADMIN"), а не как число
+    @Enumerated(EnumType.STRING) // Роль как строка
     private Role role;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL) // Связь «Один ко многим». Один юзер - много заказов.
-    private List<Order> orders;
-}
-
-/** [enum] Роли пользователей */
-public enum Role {
-    USER, ADMIN
 }
 ```
 
 ---
 
-#### 🌉 Шаг 3: `Repository` (Интерфейс базы данных)
-Прослойка для выполнения SQL-запросов.
-*   **Зачем:** Избавляет от написания SQL вручную для простых операций.
+#### 🌉 Шаг 4: `Repository` (Интерфейс базы данных)
 
 ```java
-@Repository // Помечает класс как компонент доступа к данным
+@Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    
-    // Spring Data сам напишет SQL на основе имени метода!
     Optional<User> findByUsername(String username);
-
-    // Пример кастомного запроса на языке JPQL
-    @Query("SELECT u FROM User u WHERE u.role = :role")
-    List<User> findAllByRole(@Param("role") Role role);
 }
 ```
 
 ---
 
-#### 📄 Шаг 4: `DTO` (Record — Объекты передачи данных)
-Формат данных, который мы показываем миру.
-*   **Зачем:** Безопасность (скрываем пароли) и стабильность API.
+#### 📄 Шаг 5: `DTO` (Record — Объекты передачи данных)
 
 ```java
-@Schema(description = "Информация о пользователе для ответа") // Swagger: описание для документации
-public record UserResponse(
-    @Schema(description = "ID пользователя") Long id,
-    @Schema(description = "Логин") String username,
-    @Schema(description = "Роль") Role role
-) {}
+@Schema(description = "Ответ пользователю")
+public record UserResponse(Long id, String username, Role role) {}
 
-@Schema(description = "Данные для регистрации")
+@Schema(description = "Запрос на регистрацию")
 public record UserRequest(
-    @NotBlank // Валидация: строка не должна быть пустой
-    @Size(min = 4) // Валидация: минимум 4 символа
-    String username,
-
-    @NotBlank
-    @Size(min = 8)
-    String password
+    @NotBlank @Size(min = 4) String username,
+    @NotBlank @Size(min = 8) String password
 ) {}
 ```
 
 ---
 
-#### 🔄 Шаг 5: `Mapper` (Конвертация)
-Перевод между Entity и DTO.
-*   **Зачем:** Чтобы не писать вручную `user.set...` в сервисе.
+#### 🔄 Шаг 6: `Mapper` (Конвертация)
 
 ```java
-@Mapper(componentModel = "spring") // Помечает интерфейс для работы MapStruct
+@Mapper(componentModel = "spring")
 public interface UserMapper {
-    
-    // Из Entity в DTO
     UserResponse toResponse(User user);
     
-    // Из DTO в Entity (игнорируя ID при создании)
     @Mapping(target = "id", ignore = true)
     User toEntity(UserRequest request);
 }
@@ -160,56 +141,43 @@ public interface UserMapper {
 
 ---
 
-#### 🧠 Шаг 6: `Service` (Бизнес-логика)
-«Мозг» приложения, где живут правила.
-*   **Зачем:** Здесь принимаются решения, обрабатываются ошибки и управляются транзакции.
+#### 🧠 Шаг 7: `Service` (Бизнес-логика)
 
 ```java
-@Slf4j // Создает логгер: позволяет писать log.info("...")
-@Service // Помечает класс как сервис (бизнес-логика)
-@RequiredArgsConstructor // Создает конструктор для всех final полей (DI через конструктор)
-@Transactional // Гарантирует, что все действия в методе либо выполнятся успешно, либо всё откатится
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
     public UserResponse register(UserRequest request) {
-        log.info("Регистрация нового пользователя: {}", request.username());
-
-        if (userRepository.findByUsername(request.username()).isPresent()) {
-            throw new RuntimeException("Пользователь уже существует");
-        }
-
+        log.info("Регистрация пользователя: {}", request.username());
         User user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.password()));
-        user.setRole(Role.USER); // По умолчанию - обычный юзер
-        
-        User saved = userRepository.save(user);
-        return userMapper.toResponse(saved);
+        user.setRole(Role.USER);
+        return userMapper.toResponse(userRepository.save(user));
     }
 }
 ```
 
 ---
 
-#### 🚪 Шаг 7: `Controller` (Входная точка)
-REST-интерфейс для внешних вызовов.
-*   **Зачем:** Принимать запросы, проверять валидность и возвращать HTTP статусы.
+#### 🚪 Шаг 8: `Controller` (Входная точка)
 
 ```java
-@Tag(name = "Пользователи", description = "Управление аккаунтами") // Swagger: группировка в UI
-@RestController // @Controller + @ResponseBody (всегда возвращает JSON)
-@RequestMapping("/api/users") // Базовый URL для всех методов внутри
+@Tag(name = "Users")
+@RestController
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
 
-    @Operation(summary = "Регистрация") // Swagger: описание метода
-    @PostMapping("/register") // Обработка POST запроса
+    @Operation(summary = "Регистрация")
+    @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest request) {
-        // @Valid запускает проверку @NotBlank, @Size и т.д.
-        // @RequestBody говорит Spring достать данные из JSON в теле запроса
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(request));
     }
 }
@@ -217,29 +185,20 @@ public class UserController {
 
 ---
 
-#### 🛡 Шаг 8: `Security` (Защита)
-Настройка прав доступа.
-*   **Зачем:** Определить, кто и куда может заходить.
+#### 🛡 Шаг 9: `Security` (Защита)
 
 ```java
 @Configuration
-@EnableWebSecurity // Включает поддержку безопасности Spring Security
+@EnableWebSecurity
 public class SecurityConfig {
-
-    @Bean // Регистрирует объект как бин в контексте Spring
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-            .csrf(csrf -> csrf.disable()) // Отключаем защиту CSRF для REST API
+            .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/admin/**").hasRole("ADMIN") // Доступ только админам
-                .requestMatchers("/api/users/register").permitAll() // Доступно всем
-                .anyRequest().authenticated() // Всё остальное требует логина
+                .requestMatchers("/api/users/register").permitAll()
+                .anyRequest().authenticated()
             ).build();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Алгоритм шифрования паролей
     }
 }
 ```
@@ -247,68 +206,57 @@ public class SecurityConfig {
 ---
 
 ### Как всё взаимодействует (Итог):
-1.  **Config**: Приложение стартует и подгружает настройки.
-2.  **Controller**: Получает JSON, валидирует его (`@Valid`) и отдает в Сервис.
-3.  **Service**: Делает проверки, через **Mapper** переводит DTO в **Model**, шифрует пароль и зовет **Repository**.
-4.  **Repository**: Сохраняет данные в БД.
-5.  **Security**: Незаметно стоит "на входе" и проверяет, есть ли у пользователя роль `ADMIN` перед доступом к секретным папкам.
----
-
----
+1.  **Config**: Загрузка настроек.
+2.  **Migrations**: Создание/обновление таблиц в БД.
+3.  **Model**: Отражение таблиц в коде.
+4.  **Repository**: Доступ к данным.
+5.  **DTO**: Правила обмена данными.
+6.  **Mapper**: Трансформация данных.
+7.  **Service**: Выполнение бизнес-задач.
+8.  **Controller**: Обработка HTTP запросов.
+9.  **Security**: Проверка прав на входе.
 
 ---
 
 ## Типичная структура папок проекта (от А до Я)
 
-В реальном Spring Boot проекте файлы раскладываются по пакетам (папкам) в соответствии с их ролью. Ниже представлен стандарт именования и ТИПЫ файлов:
+В реальном Spring Boot проекте файлы раскладываются по пакетам и ресурсам в соответствии с их ролью:
 
 ```text
 📂 project-root
- ├── 📁 config             (Шаг 1: Конфигурация)
- │    ├── [class] SecurityConfig.java         # Настройки безопасности
- │    └── 📁 properties
- │         └── [class] AppProperties.java      # Свойства @ConfigurationProperties
+ ├── 📁 src/main/java
+ │    ├── 📁 config             # Шаг 1: Конфигурация ([class])
+ │    ├── 📁 model              # Шаг 3: Сущности ([class], [enum])
+ │    ├── 📁 repository         # Шаг 4: Репозитории ([interface])
+ │    ├── 📁 dto                # Шаг 5: Передача данных ([record])
+ │    ├── 📁 mapper             # Шаг 6: Мапперы MapStruct ([interface])
+ │    ├── 📁 service            # Шаг 7: Бизнес-логика ([class])
+ │    ├── 📁 controller         # Шаг 8: Контроллеры ([class])
+ │    └── 📁 security           # Шаг 9: Защита ([class])
  │
- ├── 📁 model              (Шаг 2: Модели БД)
- │    ├── [class] User.java                   # Сущность (Entity)
- │    └── [enum]  Role.java                   # Перечисление ролей
- │
- ├── 📁 repository         (Шаг 3: Доступ к данным)
- │    └── [interface] UserRepository.java     # Интерфейс базы данных
- │
- ├── 📁 dto                (Шаг 4: Объекты передачи)
- │    ├── 📁 request
- │    │    └── [record] UserCreateRequest.java # Входящие данные (неизменяемые)
- │    └── 📁 response
- │         └── [record] UserResponse.java      # Исходящие данные (неизменяемые)
- │
- ├── 📁 mapper             (Шаг 5: Конвертация)
- │    └── [interface] UserMapper.java          # Описание логики маппинга
- │
- ├── 📁 service            (Шаг 6: Бизнес-логика)
- │    ├── [class] UserService.java            # Основная логика приложения
- │    └── 📁 impl                             # (Опционально)
- │         └── [class] UserServiceImpl.java    # Реализация интерфейса
- │
- ├── 📁 controller         (Шаг 7: API Эндпоинты)
- │    └── [class] UserController.java         # Обработка HTTP запросов
- │
- └── 📁 security           (Шаг 8: Фильтры и защита)
-      ├── [class] JwtFilter.java              # Технический фильтр
-      └── [class] CustomUserDetailsService.java # Загрузка пользователя
+ └── 📁 src/main/resources
+      ├── 📁 db
+      │    ├── 📁 migration     # Скрипты Flyway (V1__init.sql)
+      │    └── 📁 changelog     # Миграции Liquibase (db.changelog-master.yaml)
+      │
+      ├── application.yml       # Общие настройки
+      ├── application-dev.yml   # Настройки для разработки (Profile: dev)
+      └── application-prod.yml  # Настройки для сервера (Profile: prod)
 ```
 
 ### Подробный разбор именования и типов:
 
 *   **`Config` [class]**: Глобальные настройки.
-*   **`Entity` [class]**: Отражение таблицы в БД.
-*   **`Role` [enum]**: Набор фиксированных значений (ADMIN, USER).
-*   **`Repository` [interface]**: Описываем методы, Spring реализует их сам.
-*   **`Request / Response` [record]**: Компактные и безопасные DTO.
-*   **`Mapper` [interface]**: Описание правил перевода для MapStruct.
-*   **`Service` [class]**: Реализация бизнес-логики.
-*   **`Controller` [class]**: Входная точка для внешнего мира.
+*   **`Migrations` [.sql/.yaml]**: История изменений БД (Шаг 2).
+*   **`Application Profiles`**: Файлы `application-{profile}.yml` для разделения сред (тест/прод).
+*   **`Entity` [class]**: Модели данных.
+*   **`Repository` [interface]**: Интерфейсы доступа к БД.
+*   **`DTO` [record]**: Безопасные объекты обмена.
+*   **`Service` [class]**: Мозги приложения.
+*   **`Controller` [class]**: Вход в приложение.
 
 ---
+
+*Удачи в изучении Spring Boot!* 🚀
 
 *Удачи в изучении Spring Boot!* 🚀
