@@ -18,46 +18,54 @@
 
 ---
 
-### Пример в коде
+### Современный стандарт: Java Records (Java 17+)
 
-**DTO (UserResponse.java):**
+Для создания DTO в современном Spring Boot **золотым стандартом** является использование **Records**. Это делает объекты неизменяемыми (immutable), защищенными от случайных правок и максимально компактными.
+
+**UserResponse.java:**
 ```java
 package com.example.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "Ответ с основными данными пользователя") // ПРИМЕР: Описание для Swagger
-public class UserResponse {
+@Schema(description = "DTO для ответа пользователю")
+public record UserResponse(
+    @Schema(description = "ID пользователя", example = "1")
+    Long id,
     
-    @Schema(description = "Электронная почта", example = "ivan@gmail.com")
-    private String email;
+    @Schema(description = "Полное имя", example = "Иван Иванов")
+    String fullName,
     
-    @Schema(description = "Полное имя пользователя", example = "Иван Иванов")
-    private String fullName; // Мы объединили имя и фамилию для фронтенда
-}
+    @Schema(description = "Роль", example = "USER")
+    String role
+) {} // Весь код в одну строку! Геттеры и конструктор создадутся сами.
 ```
 
 ---
 
-### Современный подход: Java Records (Java 17+)
-Начиная с Java 17, DTO лучше всего реализовывать через **Records**. Это делает их неизменяемыми (immutable) и очень лаконичными:
+### Почему Record лучше обычного Class?
 
-```java
-public record UserResponse(String email, String fullName) {}
-```
-*Больше не нужны геттеры, сеттеры и даже Lombok!*
+| Критерий | Java Record ✅ | Java Class + Lombok ❌ |
+| :--- | :--- | :--- |
+| **Код** | 1 строка. | 10-20 строк (поля, аннотации). |
+| **Мутабельность** | **Immutable** (только чтение). Это безопасно для данных. | **Mutable** (можно случайно изменить через setter). |
+| **Бойлерплейт** | Нет. Конструктор, `equals`, `hashCode`, `toString` встроены. | Нужны аннотации `@Data`, `@AllArgsConstructor` и т.д. |
+| **Производительность** | Чуть быстрее и легче для JVM. | Зависит от библиотек. |
+
+---
+
+### Когда всё же может понадобиться Class?
+Хотя в 99% случаев DTO должны быть записями (`record`), обычный `class` нужен, если:
+1. Вам нужно **наследование** (рекорды не могут наследоваться от других классов).
+2. Вы используете Hibernate/JPA **напрямую** (но помните: Entity — это не DTO!).
+3. Вам нужно менять состояние объекта уже после его создания (что для DTO — плохой тон).
 
 ---
 
 ### Best Practices
-1. **Разделяйте**: Никогда не используйте Entity в параметрах методов контроллера. Только DTO.
-2. **Mapper**: Используйте библиотеки вроде MapStruct или просто создавайте статические методы `fromEntity` в DTO для конвертации.
-3. **Именование**: Называйте их понятно: `UserCreateRequest`, `UserUpdateDto`, `UserResponse`.
+1. **Разделяйте**: Никогда не используйте Entity в параметрах методов контроллера. Только DTO/Record.
+2. **Именуйте четко**: `UserCreateRequest` (вход), `UserResponse` (выход).
+3. **Валидация**: Аннотации `@NotBlank`, `@Size` отлично работают и в `record`:
+   ```java
+   public record UserRequest(@NotBlank String login, @Size(min=8) String password) {}
+   ```
