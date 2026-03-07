@@ -25,6 +25,7 @@
 *   [**Maven**](file:///Users/dmitrinedioglo/Documents/GitHub/SpringBootNotes/Maven.md) — Система сборки и управления зависимостями (`pom.xml`).
 *   [**Gradle**](file:///Users/dmitrinedioglo/Documents/GitHub/SpringBootNotes/Gradle.md) — Мощная и гибкая система сборки проекта (`build.gradle`).
 *   [**HTTP Statuses**](file:///Users/dmitrinedioglo/Documents/GitHub/SpringBootNotes/HttpStatuses.md) — Справочник кодов ответов (200, 401, 403 и др.).
+*   [**HTTP Methods**](file:///Users/dmitrinedioglo/Documents/GitHub/SpringBootNotes/HttpMethods.md) — Подробно о GET, POST, PUT, DELETE и идемпотентности.
 *   [**Exception Handling**](file:///Users/dmitrinedioglo/Documents/GitHub/SpringBootNotes/ExceptionHandling.md) — Глобальная обработка ошибок (`@ControllerAdvice`).
 *   [**Configuration**](file:///Users/dmitrinedioglo/Documents/GitHub/SpringBootNotes/Configuration.md) — Настройки, профили, `application.yml` и `@Value`.
 *   [**Pagination**](file:///Users/dmitrinedioglo/Documents/GitHub/SpringBootNotes/Pagination.md) — Пагинация и сортировка данных (`Pageable`).
