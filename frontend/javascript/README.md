@@ -27,20 +27,39 @@
 
 ### Асинхронность (Async JavaScript)
 * **Event Loop** — Как JS (однопоточный) выполняет асинхронный код: Call Stack, Web APIs, Callback Queue, Microtask Queue.
-* **Callbacks** — Колбэки и проблема "Callback Hell".
-* **Promises** — Состояния (`pending`, `fulfilled`, `rejected`), `.then()`, `.catch()`, `.finally()`. `Promise.all` vs `Promise.allSettled` vs `Promise.race`.
-* **`async/await`** — Синтаксический сахар над Promise для читаемого асинхронного кода.
+* **Promises** — Состояния (`pending`, `fulfilled`, `rejected`).
+* **`async/await`** — Синтаксический сахар над Promise.
 
-### Работа с DOM
-* **Выборка элементов** — `querySelector`, `querySelectorAll`, `getElementById`.
-* **Манипуляция** — `createElement`, `appendChild`, `innerHTML`, `textContent`, `classList`.
-* **События (Events)** — `addEventListener`, Event Object, всплытие (`bubbling`) и перехват (`capturing`), делегирование.
-* **Fetch API** — Выполнение HTTP-запросов напрямую из браузера.
+#### Пример: Fetch данных с async/await
+```javascript
+async function fetchData(url) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Ошибка сети');
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Ошибка:', error);
+  }
+}
+```
 
-### Паттерны и продвинутые техники
-* **Иммутабельность** — Почему важно не мутировать данные напрямую (`map`, `filter`, `reduce`).
-* **Паттерны** — Module, Observer/PubSub, Singleton.
-* **Производительность** — `debounce`, `throttle`, Memoization.
+### Паттерны и производительность
+* **Производительность** — `debounce`, `throttle`.
+
+#### Пример: Debounce (Защита от слишком частых вызовов)
+```javascript
+function debounce(func, delay) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
+// Применение: поиск при вводе
+const handleSearch = debounce((query) => console.log('Searching:', query), 500);
+```
 
 ---
 

@@ -4,7 +4,18 @@
 
 ## Содержание
 
-### Реляционные базы данных (SQL)
+### 1. [SQL vs NoSQL](./SQL_NoSQL.md) 💾
+- Реляционные (PostgreSQL) vs Нереляционные (MongoDB, Redis).
+- ACID vs BASE.
+- CAP-теорема.
+
+### 2. [Hibernate & ORM](./Hibernate_ORM.md) 🐘
+- Жизненный цикл сущностей.
+- Проблема N+1 и способы решения.
+- Lazy vs Eager loading.
+- Кэширование (L1, L2).
+
+### 3. Реляционные базы данных (SQL) (Обзор)
 * **PostgreSQL / MySQL** — Архитектура и основные отличия, типы данных, партицирование, репликация (Master-Slave / Master-Master).
 * **Нормализация БД** — Зачем нужна, формы (1NF, 2NF, 3NF, BCNF) и денормализация в угоду производительности.
 * **Индексы (Indexes)** — B-Tree, Hash, GIN / GiST, как работают, композитные индексы, сканирование индекса, "покрывающие" индексы.
@@ -22,13 +33,13 @@
   * Пул соединений (HikariCP).
   * Оптимистичные блокировки (`@Version`) vs Пессимистичные блокировки (`FOR UPDATE`).
 
-### Нереляционные базы данных (NoSQL)
+### 4. Нереляционные базы данных (NoSQL) (Обзор)
 * **MongoDB (Document-oriented)** — Коллекции, документы, BSON, агрегации.
 * **Redis (Key-Value) / Memcached** — In-memory кэширование, TTL, структуры данных (Strings, Hashes, Lists, Sets, Sorted Sets), Pub/Sub.
 * **Cassandra (Column-family)** — Распределенная архитектура, Masterless, CAP-теорема.
 * **Elasticsearch / Solr** — Полнотекстовый поиск.
 
-### Object-Relational Mapping (ORM)
+### 5. Object-Relational Mapping (ORM) (Обзор)
 * **Hibernate / JPA Frameworks**
   * **Entity Lifecycle** — Состояния сущности: Transient, Persistent / Managed, Detached, Removed.
   * **N+1 Запросов** — Главная проблема ORM. Решения: `JOIN FETCH`, `@EntityGraph`, `@BatchSize`.
@@ -38,11 +49,11 @@
     * *Second Level Cache* (Общий кэш фабрики сессий — Ehcache, Hazelcast, Redis).
     * *Query Cache* (Кэширование самих результатов запроса).
 
-### Data Access Data (Spring Data)
+### 6. Data Access Data (Spring Data)
 * **Spring Data JPA** — Репозитории, автоматическая генерация запросов (`findByUsername`), `@Query` для кастомного JPQL / Native SQL, Specifications / Criteria API.
 * **Spring Data Redis** и кэш.
 
-### Миграции Баз Данных Schema Evolution
+### 7. Миграции Баз Данных Schema Evolution
 * Почему не стоит использовать `spring.jpa.hibernate.ddl-auto=update` в Production.
 * **Flyway** — Миграции кодом SQL, таблица `flyway_schema_history`, версионирование (`V1__...`, `U2__...`).
 * **Liquibase** — Миграции на основе XML / YAML / SQL, `databaseChangeLog`, Rollbacks.

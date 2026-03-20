@@ -11,14 +11,43 @@
 * **Доступность (a11y)** — ARIA-атрибуты (`role`, `aria-label`, `aria-hidden`), семантика для скринридеров.
 
 ### CSS3
-* **Box Model** — `margin`, `padding`, `border`, `box-sizing: border-box`.
-* **Cascading & Specificity** — Как браузер решает, какой стиль применить (специфичность: `id > class > tag`).
-* **Flexbox** — `display: flex`, оси (`flex-direction`), `justify-content`, `align-items`, `flex-wrap`, `gap`.
-* **CSS Grid** — `display: grid`, `grid-template-columns/rows`, `grid-area`, `auto-fill/auto-fit`, `fr` единица.
-* **Позиционирование** — `static`, `relative`, `absolute`, `fixed`, `sticky`.
-* **CSS-переменные (Custom Properties)** — `--color-primary: #...`, `var(--color-primary)`.
-* **Анимации** — `transition` (плавные переходы), `@keyframes` + `animation` (кастомные анимации).
-* **Медиазапросы (Media Queries)** — `@media (max-width: 768px)`, Mobile-First vs Desktop-First подход.
+* **Flexbox** — Сетка в одном измерении.
+  - `justify-content`: выравнивание по главной оси.
+  - `align-items`: выравнивание по поперечной оси.
+* **CSS Grid** — Двумерная сетка.
+
+#### Примеры CSS верстки
+
+**Центрирование элемента (Flexbox):**
+```css
+.container {
+  display: flex;
+  justify-content: center; /* по горизонтали */
+  align-items: center;     /* по вертикали */
+  height: 100vh;
+}
+```
+
+**Адаптивная сетка (Grid):**
+```css
+.grid-container {
+  display: grid;
+  /* Колонки минимум 200px, заполняют всё пространство */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+```
+
+**CSS Переменные:**
+```css
+:root {
+  --primary-color: #3498db;
+}
+
+.button {
+  background-color: var(--primary-color);
+}
+```
 
 ### Препроцессоры и методологии
 * **SCSS / SASS** — Переменные, вложенность, миксины (`@mixin`), наследование (`@extend`).

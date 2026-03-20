@@ -10,6 +10,7 @@
 3. **Авторизация (Authorization)** — Управление доступом (RBAC — Role-Based, ABAC — Attribute-Based).
 
 ### Стандарты и протоколы
+1. [**JWT & OAuth2**](./JWT_OAuth2.md) 🛡️ — Подробный разбор современных протоколов.
 * **JWT (JSON Web Token)** — Структура токена (Header, Payload, Signature), хранение (Header vs Cookie), Refresh Tokens.
 * **OAuth2 / OpenID Connect (OIDC)** — Вход через Google/GitHub, Flow (Authorization Code, Client Credentials).
 

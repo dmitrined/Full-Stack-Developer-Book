@@ -6,9 +6,12 @@
 3. Что такое SOLID и почему это важно?
 
 ## Junior/Middle Java Question Map
-- **Core**: Расскажите про HashMap. Какие изменения были в Java 8? Что такое Virtual Threads?
-- **Spring**: В чем разница между `@Component`, `@Service`, `@Repository`? Как работает `@Transactional`?
-- **Web**: Что такое REST? Какие бывают методы и статус-коды?
+- **Core**: Расскажите про [HashMap](../backend/java/Collections.md). Какие изменения были в Java 8? Что такое [Virtual Threads](../backend/java/Multithreading.md)?
+- **Spring**: В чем разница между `@Component`, `@Service`, `@Repository`? Как работает [Transactional](../backend/databases/README.md)?
+- **Web**: Что такое [REST](../backend/architecture/README.md)? Какие бывают методы и статус-коды?
+- **Security**: В чем разница между Authentication и Authorization? Как работает [JWT](../backend/security/JWT_OAuth2.md)?
+- **Database**: Что такое [ACID](../backend/databases/SQL_NoSQL.md)? Проблема [N+1](../backend/databases/Hibernate_ORM.md).
+- **Testing**: Зачем нужны [Unit-тесты](../qa-and-testing/unit-testing/Testing.md) и как использовать [Mockito](../qa-and-testing/unit-testing/Testing.md)?
 
 ---
 

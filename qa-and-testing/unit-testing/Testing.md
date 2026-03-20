@@ -62,66 +62,65 @@
 ---
 
 ### 3. Пример Unit-теста (Mockito)
+Здесь мы тестируем `UserService` в полной изоляции от базы данных.
+
 ```java
-package com.example.service;
-
-import com.example.repository.UserRepository;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-@ExtendWith(MockitoExtension.class) // Включаем поддержку Mockito
+@ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
     @Mock
-    private UserRepository userRepository; // Делаем "куклу" БД
+    private UserRepository userRepository; // Создаем мок (заглушку) репозитория
 
     @InjectMocks
-    private UserService userService; // Сюда Mockito подставит userRepository
+    private UserService userService; // Внедряем мок в тестируемый сервис
 
     @Test
-    void shouldReturnTrueWhenEmailExists() {
-        // Указываем: "когда спросят ivan@gmail.com, отвечай true"
-        when(userRepository.existsByEmail("ivan@gmail.com")).thenReturn(true);
+    void shouldCreateUser_WhenDataIsValid() {
+        // 1. Arrange (Подготовка)
+        UserDTO dto = new UserDTO("ivan@test.com", "pass123");
+        User savedUser = new User(1L, "ivan@test.com", "encoded_pass");
+        
+        // Обучаем мок: при вызове save() вернуть объект с ID
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
-        // Вызываем реальный метод сервиса
-        boolean exists = userService.checkUserExists("ivan@gmail.com");
+        // 2. Act (Действие)
+        UserResponse result = userService.createUser(dto);
 
-        // Проверяем результат
-        assertTrue(exists);
-        verify(userRepository).existsByEmail("ivan@gmail.com"); // Убеждаемся, что метод БД реально вызывался
+        // 3. Assert (Проверка)
+        assertNotNull(result.getId());
+        assertEquals("ivan@test.com", result.getEmail());
+        
+        // Проверяем, что метод save вызывался ровно 1 раз
+        verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    @Test
+    void shouldThrowException_WhenUserAlreadyExists() {
+        when(userRepository.existsByEmail("exist@test.com")).thenReturn(true);
+
+        // Проверяем, что сервис выбрасывает ожидаемое исключение
+        assertThrows(UserAlreadyExistsException.class, () -> {
+            userService.createUser(new UserDTO("exist@test.com", "pass"));
+        });
     }
 }
 ```
 
 ---
 
-### 2. Integration Tests (Интеграционные тесты)
+### 4. Полезные методы Mockito
+- `when(...).thenReturn(...)` — задать возвращаемое значение.
+- `when(...).thenThrow(...)` — имитировать выброс исключения.
+- `verify(mock, times(n)).method()` — проверить количество вызовов.
+- `any()`, `anyString()`, `anyLong()` — аргумент-матчеры для гибкости.
+- `doNothing().when(mock).voidMethod()` — для методов, которые ничего не возвращают.
+
+---
+
+### 5. Integration Tests (Интеграционные тесты)
 Тестируем, как разные слои работают вместе. Здесь поднимается реальный Spring Context.
 
 ```java
-package com.example.controller;
-
-import com.example.dto.RegisterRequest;
-import com.example.service.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 @SpringBootTest 
 @AutoConfigureMockMvc // Позволяет отправлять фейковые HTTP запросы
 class UserControllerIT {
@@ -133,16 +132,14 @@ class UserControllerIT {
     private ObjectMapper objectMapper; // Для превращения объектов в JSON (и обратно)
 
     @MockBean
-    private UserService userService; // Замокаем сервис, чтобы не писать в реальную БД при тесте контроллера
+    private UserService userService; // Замокаем сервис
 
     @Test
     void shouldReturn201OnSuccessfulRegistration() throws Exception {
         RegisterRequest request = new RegisterRequest("Ivan", "ivan@gmail.com", "password");
         
-        // Настраиваем Mock, чтобы сервис не ругался
         when(userService.register(any(RegisterRequest.class))).thenReturn(null);
 
-        // Имитируем POST запрос
         mockMvc.perform(post("/api/users/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))

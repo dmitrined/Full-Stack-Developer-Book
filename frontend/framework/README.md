@@ -6,6 +6,8 @@
 
 ### React
 
+1. [**Hooks (Хуки)**](./React_Hooks.md) 🎣 — Подробный разбор useState, useEffect и других.
+
 #### Компоненты (Components)
 * **Function Components** — Современный стандарт. Компонент = функция, возвращающая JSX.
 * **JSX** — XML-подобный синтаксис в JS. Компилируется в `React.createElement()`.
