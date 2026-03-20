@@ -23,6 +23,11 @@
 - Граничные значения.
 - Таблица принятия решений.
 
+## 5. [Стратегии тестирования](./Testing_Strategy.md) 🏗️
+- Подходы: Shift-Left, Shift-Right, TDD, BDD, ATDD.
+- Архитектуры: Пирамида vs Соты (Honeycomb).
+- Непрерывное тестирование и контракты.
+
 ---
 
-[⬅️ Назад к QA Index](../README.md)
+[⬅️ Назад к QA Index](../README.md) | [К стратегии ➡️](./Testing_Strategy.md)
