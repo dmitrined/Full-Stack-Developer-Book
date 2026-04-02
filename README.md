@@ -19,6 +19,9 @@
 ### 4. 🧪 [QA & Testing](./qa-and-testing/README.md)
 *   Теория тестирования и автоматизация (Unit, API, E2E).
 
+### 5. ⚡ [Next.js](./next-js/README.md)
+*   App Router, Server/Client Components, Server Actions, Drizzle ORM, Zod, NextAuth.js.
+
 ---
 
 ## ⚡ Быстрый доступ (Cheatsheets)
